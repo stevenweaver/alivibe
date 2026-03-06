@@ -1,7 +1,14 @@
 {
-  "name": "alivibe-app",
+  "name": "alivibe",
   "version": "0.1.0",
-  "private": true,
+  "type": "module",
+  "svelte": "./src/lib/alivibe/index.ts",
+  "exports": {
+    ".": {
+      "svelte": "./src/lib/alivibe/index.ts",
+      "default": "./src/lib/alivibe/index.ts"
+    }
+  },
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
@@ -14,6 +21,5 @@
     "svelte": "^5.0.0",
     "typescript": "^5.7.0",
     "vite": "^6.0.0"
-  },
-  "type": "module"
+  }
 }

@@ -6,13 +6,23 @@
     import { inferTreeNJ, runFastTreeTask, exportTree, ladderizeTree } from './tree.js';
     import { computeTreeLayout } from './tree.js';
 
-    let selAlignMode: HTMLSelectElement;
-    let btnCopy: HTMLButtonElement;
+    interface Props {
+        features?: Record<string, boolean>;
+    }
+    let { features }: Props = $props();
 
-    // Wire up the align mode getter
+    // Show feature unless explicitly disabled
+    function show(name: string): boolean {
+        return !features || features[name] !== false;
+    }
+
+    let selAlignMode: HTMLSelectElement | undefined;
+    let btnCopy: HTMLButtonElement | undefined;
+
+    // Wire up the align mode getter (only when alignment controls are visible)
     $effect(() => {
-        if (selAlignMode) {
-            setAlignModeGetter(() => selAlignMode.value);
+        if (show('alignment') && selAlignMode) {
+            setAlignModeGetter(() => selAlignMode!.value);
         }
     });
 
@@ -41,7 +51,7 @@
 
     function handleCopyButton() {
         const content = getClipboardContent(true);
-        if (!content) return;
+        if (!content || !btnCopy) return;
         if (!navigator.clipboard || !navigator.clipboard.writeText) return;
         const originalText = btnCopy.textContent;
         navigator.clipboard.writeText(content).then(() => {
@@ -105,87 +115,108 @@
 </script>
 
 <div id="controls">
-    <div class="control-group">
-        <label>Sequences</label>
-        <input type="file" accept=".fasta,.fa,.fastq,.fq,.txt" onchange={handleFileChange}>
-    </div>
-    <div class="control-group">
-        <label>Phylogeny</label>
-        <div style="display:flex; gap:5px; align-items:center;">
-            <button onclick={showInferModal} title="Infer NJ tree from sequences">Infer</button>
-            <input type="file" onchange={handleTreeFileChange}>
-            <button onclick={() => exportTree()} title="Export current tree as Newick">Export</button>
-            <button onclick={() => ladderizeTree()} title="Ladderize tree and reorder sequences">Ladderize</button>
+    {#if show('sequences')}
+        <div class="control-group">
+            <label>Sequences</label>
+            <input type="file" accept=".fasta,.fa,.fastq,.fq,.txt" onchange={handleFileChange}>
         </div>
-    </div>
-    <div class="control-group">
-        <label>Reset</label>
-        <div style="display:flex; gap:5px;">
-            <button onclick={handleClearAlignment} title="Remove all sequences">Clear Alignment</button>
-            <button onclick={() => clearTreeOnly()} title="Remove current tree">Clear Tree</button>
+    {/if}
+    {#if show('phylogeny')}
+        <div class="control-group">
+            <label>Phylogeny</label>
+            <div style="display:flex; gap:5px; align-items:center;">
+                <button onclick={showInferModal} title="Infer NJ tree from sequences">Infer</button>
+                <input type="file" onchange={handleTreeFileChange}>
+                <button onclick={() => exportTree()} title="Export current tree as Newick">Export</button>
+                <button onclick={() => ladderizeTree()} title="Ladderize tree and reorder sequences">Ladderize</button>
+            </div>
         </div>
-    </div>
-    <div class="separator"></div>
-    <div class="control-group">
-        <label>History</label>
-        <button onclick={handleUndo} title="Ctrl+Z" disabled={ui.historyLength === 0} style:opacity={ui.historyLength === 0 ? '0.5' : '1'}>⟲ Undo</button>
-    </div>
-
-    <div class="separator"></div>
-    <div class="control-group">
-        <label>Export</label>
-        <div style="display:flex; gap:5px;">
-            <button onclick={() => exportAlignment('download')} title="Download Current View">Download</button>
-            <button bind:this={btnCopy} onclick={handleCopyButton} title="Copy to Clipboard">Copy</button>
+    {/if}
+    {#if show('reset')}
+        <div class="control-group">
+            <label>Reset</label>
+            <div style="display:flex; gap:5px;">
+                <button onclick={handleClearAlignment} title="Remove all sequences">Clear Alignment</button>
+                <button onclick={() => clearTreeOnly()} title="Remove current tree">Clear Tree</button>
+            </div>
         </div>
-    </div>
-
-    <div class="separator"></div>
-    <div class="control-group">
-        <label>View Mode</label>
-        <div style="display:flex;">
-            <button class:active={ui.mode === 'NT'} onclick={() => handleSetMode('NT')} style="border-top-right-radius:0; border-bottom-right-radius:0;">NT</button>
-            <button class:active={ui.mode === 'AA'} onclick={() => handleSetMode('AA')} style="border-top-left-radius:0; border-bottom-left-radius:0; border-left:none;">AA</button>
+    {/if}
+    {#if (show('sequences') || show('phylogeny') || show('reset')) && show('history')}
+        <div class="separator"></div>
+    {/if}
+    {#if show('history')}
+        <div class="control-group">
+            <label>History</label>
+            <button onclick={handleUndo} title="Ctrl+Z" disabled={ui.historyLength === 0} style:opacity={ui.historyLength === 0 ? '0.5' : '1'}>⟲ Undo</button>
         </div>
-    </div>
-
-    <div class="control-group">
-        <label>Highlighter</label>
-        <button class:active={ui.highlightMatches} onclick={handleHighlight}>Highlighter</button>
-    </div>
-
-    <div class="control-group">
-        <label>Alignment</label>
-        <div style="display:flex; gap:5px;">
-            <button onclick={() => runAlignmentTask()}>Align</button>
-            <select bind:this={selAlignMode}>
-                <option value="msa">MSA</option>
-                <option value="kalign">Kalign</option>
-                <option value="polish">Polish</option>
-                <option value="left">Left Pile</option>
-                <option value="discard">Discard Ins</option>
+    {/if}
+    {#if show('history') && show('export')}
+        <div class="separator"></div>
+    {/if}
+    {#if show('export')}
+        <div class="control-group">
+            <label>Export</label>
+            <div style="display:flex; gap:5px;">
+                <button onclick={() => exportAlignment('download')} title="Download Current View">Download</button>
+                <button bind:this={btnCopy} onclick={handleCopyButton} title="Copy to Clipboard">Copy</button>
+            </div>
+        </div>
+    {/if}
+    {#if (show('history') || show('export')) && (show('viewMode') || show('highlighter'))}
+        <div class="separator"></div>
+    {/if}
+    {#if show('viewMode')}
+        <div class="control-group">
+            <label>View Mode</label>
+            <div style="display:flex;">
+                <button class:active={ui.mode === 'NT'} onclick={() => handleSetMode('NT')} style="border-top-right-radius:0; border-bottom-right-radius:0;">NT</button>
+                <button class:active={ui.mode === 'AA'} onclick={() => handleSetMode('AA')} style="border-top-left-radius:0; border-bottom-left-radius:0; border-left:none;">AA</button>
+            </div>
+        </div>
+    {/if}
+    {#if show('highlighter')}
+        <div class="control-group">
+            <label>Highlighter</label>
+            <button class:active={ui.highlightMatches} onclick={handleHighlight}>Highlighter</button>
+        </div>
+    {/if}
+    {#if show('alignment')}
+        <div class="control-group">
+            <label>Alignment</label>
+            <div style="display:flex; gap:5px;">
+                <button onclick={() => runAlignmentTask()}>Align</button>
+                <select bind:this={selAlignMode}>
+                    <option value="msa">MSA</option>
+                    <option value="kalign">Kalign</option>
+                    <option value="polish">Polish</option>
+                    <option value="left">Left Pile</option>
+                    <option value="discard">Discard Ins</option>
+                </select>
+                <button onclick={() => realignSelection()} title="Realign within selection">Align Sel</button>
+                <button onclick={() => stripGapsGlobal()} title="Strip all gaps from alignment">Strip Gaps</button>
+                <button onclick={showCleanModal} title="Clean out-of-frame insertions">Clean Frame</button>
+            </div>
+        </div>
+    {/if}
+    {#if (show('viewMode') || show('highlighter') || show('alignment')) && (show('frame') || show('info'))}
+        <div class="separator"></div>
+    {/if}
+    {#if show('frame')}
+        <div class="control-group" style:opacity={ui.mode === 'AA' ? '1' : '0.4'} style:pointer-events={ui.mode === 'AA' ? 'auto' : 'none'}>
+            <label>Frame</label>
+            <select value={String(ui.frame)} onchange={handleFrameChange}>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
             </select>
-            <button onclick={() => realignSelection()} title="Realign within selection">Align Sel</button>
-            <button onclick={() => stripGapsGlobal()} title="Strip all gaps from alignment">Strip Gaps</button>
-            <button onclick={showCleanModal} title="Clean out-of-frame insertions">Clean Frame</button>
         </div>
-    </div>
-
-    <div class="separator"></div>
-
-    <div class="control-group" style:opacity={ui.mode === 'AA' ? '1' : '0.4'} style:pointer-events={ui.mode === 'AA' ? 'auto' : 'none'}>
-        <label>Frame</label>
-        <select value={String(ui.frame)} onchange={handleFrameChange}>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-        </select>
-    </div>
-
-    <div class="control-group">
-        <label>Info</label>
-        <button class="btn-icon" onclick={() => ui.helpVisible = true}>?</button>
-    </div>
+    {/if}
+    {#if show('info')}
+        <div class="control-group">
+            <label>Info</label>
+            <button class="btn-icon" onclick={() => ui.helpVisible = true}>?</button>
+        </div>
+    {/if}
 </div>
 
 <style>

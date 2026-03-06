@@ -5,16 +5,18 @@
     import ControlBar from './ControlBar.svelte';
     import AlignmentCanvas from './AlignmentCanvas.svelte';
     import Overlays from './Overlays.svelte';
-    import { computeTreeLayout } from './tree.js';
+    import { computeTreeLayout, parseTree } from './tree.js';
     import { parseFasta } from './io.js';
 
     interface Props {
         fastaUrl?: string;
         treeUrl?: string;
         height?: string;
+        showControls?: boolean;
+        features?: Record<string, boolean>;
     }
 
-    let { fastaUrl, treeUrl, height = '100vh' }: Props = $props();
+    let { fastaUrl, treeUrl, height = '100vh', showControls = true, features }: Props = $props();
 
     let canvasComponent: AlignmentCanvas;
 
@@ -22,6 +24,10 @@
     export function loadFasta(text: string) {
         parseFasta(text);
         computeTreeLayout();
+    }
+
+    export function loadTree(newick: string) {
+        parseTree(newick);
     }
 
     export function getAlignment(): { name: string; seq: string }[] {
@@ -68,7 +74,9 @@
 </svelte:head>
 
 <div id="alivibe-app" style="height: {height}">
-    <ControlBar />
+    {#if showControls}
+        <ControlBar {features} />
+    {/if}
     <AlignmentCanvas bind:this={canvasComponent} />
     <Overlays />
 </div>
