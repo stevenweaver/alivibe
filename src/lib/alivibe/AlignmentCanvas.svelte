@@ -245,6 +245,7 @@
     #area-seq :global(.grabbing) { cursor: grabbing; }
 
     canvas { display: block; }
+    #area-seq canvas { position: sticky; top: 0; left: 0; z-index: 1; }
     #scroll-sizer { position: absolute; top: 0; left: 0; width: 1px; height: 1px; z-index: -1; }
 
     #ctx-menu {
