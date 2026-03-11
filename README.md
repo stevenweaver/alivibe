@@ -1,5 +1,7 @@
 # AliVibe
 
+Based on the original [AliVibe widget](https://murrellgroup.github.io/WebWidgets/alivibe.html) by [Ben Murrell](https://github.com/MurrellGroup) and the [Murrell Group](https://github.com/MurrellGroup), part of their [WebWidgets](https://github.com/MurrellGroup/WebWidgets) collection.
+
 An interactive sequence alignment viewer and editor built as a Svelte 5 component library. AliVibe provides canvas-based rendering of nucleotide and amino acid alignments with phylogenetic tree visualization, real-time editing, and multiple sequence alignment tools.
 
 ## Features
